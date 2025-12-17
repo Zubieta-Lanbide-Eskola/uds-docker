@@ -72,7 +72,7 @@ services:
     depends_on:
       - udsbroker
   uds-tunnel-server:
-    image: aitzol/uds-tunnel-server:3.5
+    image: lhusurbil/uds-tunnel-server:4.0beta
     ports: 
       - "7777:7777"
     volumes:

@@ -1,9 +1,8 @@
-version: "3.9"
 services:
   udsbroker:
     ports: 
       - "8000:8000"
-    image: "aitzol/udsbroker:3.5"
+    image: "lhzubieta/udsbroker:4.0beta"
     depends_on:
       - mysql
       - memcache
@@ -11,12 +10,14 @@ services:
       - assets:/app/static
       - ./server/rsa_key:/app/rsa_key
   taskManager:
-    image: "aitzol/udsbroker:3.5"
+    image: "lhzubieta/udsbroker:4.0beta"
     command: "python manage.py taskManager --start --foreground"
     depends_on:
       - mysql
+    volumes:
+      - ./server/rsa_key:/app/rsa_key
   mysql:
-    image: mysql
+    image: mysql:8.0.27
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
       MYSQL_DATABASE: uds
@@ -27,7 +28,7 @@ services:
     security_opt:
       - seccomp:unconfined
   mysql-guacamole:
-    image: mysql
+    image: mysql:8.0.27
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
       MYSQL_DATABASE: guacamole
@@ -36,13 +37,13 @@ services:
     security_opt:
       - seccomp:unconfined
   memcache:
-    image: "memcached"
+    image: "memcached:1.6.12-alpine"
   guacd:
-    image: "guacamole/guacd"
+    image: "guacamole/guacd:1.5.0"
     ports:
       - "4822:4822"
   guacamole:
-    image: "guacamole/guacamole"
+    image: "guacamole/guacamole:1.5.0"
     volumes:
       - ./guacamoletunnel:/guacamole_home
     environment:
@@ -58,7 +59,7 @@ services:
       - "8080:8080"
     
   webserver:
-    image: caddy
+    image: caddy:2.5.1
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - assets:/media

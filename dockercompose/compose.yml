@@ -60,6 +60,8 @@ services:
     
   webserver:
     image: caddy:2.5.1
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - assets:/media

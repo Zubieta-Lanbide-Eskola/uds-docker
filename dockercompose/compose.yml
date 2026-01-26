@@ -3,7 +3,7 @@ services:
     ports: 
       - "8000:8000"
     build:
-      context: ./server/udsbroker-build
+      context: ./building/udsbroker
       dockerfile: DockerFile
       args:
         UDS_BROKER_COMMIT: ${UDS_BROKER_COMMIT:?UDS_BROKER_COMMIT is required}
@@ -16,7 +16,7 @@ services:
       - ./server/rsa_key:/app/rsa_key
   taskManager:
     build:
-      context: ./server/udsbroker-build
+      context: ./building/udsbroker
       dockerfile: DockerFile
       args:
         UDS_BROKER_COMMIT: ${UDS_BROKER_COMMIT:?UDS_BROKER_COMMIT is required}

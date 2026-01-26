@@ -6,8 +6,8 @@ services:
       context: ./building/udsbroker
       dockerfile: DockerFile
       args:
-        UDS_BROKER_COMMIT: ${UDS_BROKER_COMMIT:?UDS_BROKER_COMMIT is required}
-    image: udsbroker:${UDS_BROKER_VERSION:?UDS_BROKER_VERSION is required}-${UDS_BROKER_COMMIT}
+        OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
+    image: udsbroker:4.0-${OPENUDS_COMMIT}
     depends_on:
       - mysql
       - memcache
@@ -19,8 +19,8 @@ services:
       context: ./building/udsbroker
       dockerfile: DockerFile
       args:
-        UDS_BROKER_COMMIT: ${UDS_BROKER_COMMIT:?UDS_BROKER_COMMIT is required}
-    image: udsbroker:${UDS_BROKER_VERSION:?UDS_BROKER_VERSION is required}-${UDS_BROKER_COMMIT}
+        OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
+    image: udsbroker:4.0-${OPENUDS_COMMIT}
     command: "python manage.py taskManager --start --foreground"
     depends_on:
       - mysql

@@ -84,7 +84,12 @@ services:
     depends_on:
       - udsbroker
   uds-tunnel-server:
-    image: lhzubieta/uds-tunnel-server:4.0beta
+    build:
+      context: ./building/udstunnelserver
+      dockerfile: DockerFile
+      args:
+        OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
+    image: uds-tunnel-server:4.0-${OPENUDS_COMMIT}
     ports: 
       - "7777:7777"
     volumes:

@@ -60,10 +60,10 @@ Open a shell in the udsbroker service and run
 python manage.py shell
 
 >>> import datetime
->>> from uds.models.tunnel_token import TunnelToken
+>>> from uds.models.servers import Server
 >>> token=YOUR_GENERATED_TOKEN
 >>> tunnel=YOUR_DOCKER_COMPOSE_SERVER_IP
->>> TunnelToken.objects.create(ip=tunnel, token=token,stamp=datetime.datetime.now())
+>>> Server.objects.create(ip=tunnel, token=token,stamp=datetime.datetime.now())
 ```
 
 ## Configure token in guacamole and uds tunnel server

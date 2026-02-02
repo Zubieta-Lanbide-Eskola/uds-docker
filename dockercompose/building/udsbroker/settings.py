@@ -142,6 +142,10 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.memcached.PyLibMCCache",
         "LOCATION": "memcache:11211",
     },
+    "memory": {
+        "BACKEND": "django.core.cache.backends.memcached.PyLibMCCache",
+        "LOCATION": "memcache:11211",
+    },
 }
 
 # Update DB and CACHE if we are running tests

@@ -71,6 +71,30 @@ python manage.py shell
 Edit guacamoletunnel/guacamole.properties and uds-tunnel/udstunnel.conf files to replace GENERATED_TOKEN
 literal with the created token.
 
+## Create tunnel certs
+
+In `uds-tunnel/certs` you must put a certificate file and it's key for the
+RDP tunnel server.
+
+You can generate a self-signed certificate and, while defining tunneled RDP UDP
+transport in OpenUDS instruct it not to verify the SSL certificate.
+
+Here is an example of generating a self signed certificate:
+
+```bash
+openssl genrsa -out uds-tunnel/certs/server.key 2048
+
+openssl req -key uds-tunnel/certs/server.key -new -out uds-tunnel/certs/server.csr
+# Fill with whatever you prefer but in Common Name just in case set the public
+# domain used to access the tunnel.
+
+openssl x509 -signkey uds-tunnel/certs/server.key -in uds-tunnel/certs/server.csr -req -days 36500 -out uds-tunnel/certs/server.crt
+```
+
+**Warning!** This is not a best practice at al. For sensible environments you
+should seriously consider using valid and recognized certificates and configuring
+your transports so that they validate the SSL certificate.
+
 ## Restart docker compose environment
 
 ```

@@ -1,7 +1,5 @@
 services:
   udsbroker:
-    ports: 
-      - "8000:8000"
     build:
       context: ./building/udsbroker
       dockerfile: DockerFile
@@ -65,8 +63,6 @@ services:
       MYSQL_PASSWORD: guacamolepassword 
     links:
       - guacd
-    ports:
-      - "8080:8080"
     
   webserver:
     image: caddy:2.5.1
@@ -90,10 +86,11 @@ services:
       args:
         OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
     image: uds-tunnel-server:4.0-${OPENUDS_COMMIT}
-    ports: 
+    ports:
       - "7777:7777"
     volumes:
       - ./uds-tunnel/udstunnel.conf:/etc/udstunnel.conf
+      - ./uds-tunnel/certs:/etc/certs
 volumes:
   dbdata:
   assets:

@@ -1,8 +1,5 @@
 
-# if DOMAIN_NAME starts with http:// caddy won't get ssl certificate
-# else DOMAIN_NAME must resolve to caddy's IP
-
-DOMAIN_NAME {
+{$DOMAIN_NAME} {
 
     @notStatic {
         not path /uds/res/

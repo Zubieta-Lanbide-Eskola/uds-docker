@@ -248,7 +248,10 @@ MIDDLEWARE = [
     "uds.middleware.request.GlobalRequestMiddleware",
     "uds.middleware.security.UDSSecurityMiddleware",
     "uds.middleware.xua.XUACompatibleMiddleware",
-    "uds.middleware.redirect.RedirectMiddleware",
+    # We have offloaded HTTPS management to caddy and we want tunnel server to
+    # be able to connect in the internal docker network through HTTP so we disable
+    # this middleware.
+    # "uds.middleware.redirect.RedirectMiddleware",
 ]
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

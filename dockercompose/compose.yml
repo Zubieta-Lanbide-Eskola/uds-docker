@@ -1,11 +1,6 @@
 services:
   broker:
-    build:
-      context: ./building/broker
-      dockerfile: DockerFile
-      args:
-        OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
-    image: uds-broker:4.0-${OPENUDS_COMMIT}
+    image: lhzubieta/uds-broker:4.0
     depends_on:
       - broker-db
       - memcache
@@ -15,12 +10,7 @@ services:
       - ./config/broker/rsa_key:/app/rsa_key
       - ./config/broker/settings.py:/app/server/settings.py
   task-manager:
-    build:
-      context: ./building/broker
-      dockerfile: DockerFile
-      args:
-        OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
-    image: uds-broker:4.0-${OPENUDS_COMMIT}
+    image: lhzubieta/uds-broker:4.0
     command: "python manage.py taskManager --start --foreground"
     depends_on:
       - broker-db
@@ -68,12 +58,7 @@ services:
     depends_on:
       - broker
   tunnel-server:
-    build:
-      context: ./building/tunnelserver
-      dockerfile: DockerFile
-      args:
-        OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
-    image: uds-tunnel-server:4.0-${OPENUDS_COMMIT}
+    image: lhzubieta/uds-tunnel-server:4.0
     ports:
       - "7777:7777"
     volumes:

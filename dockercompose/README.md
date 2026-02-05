@@ -94,7 +94,7 @@ quit()
 
 ## Configure token in guacamole and uds tunnel server
 
-Edit guacamoletunnel/guacamole.properties and config/tunnel-server/udstunnel.conf files to replace GENERATED_TOKEN
+Edit `config/guacamole/guacamole.properties` and `config/tunnel-server/udstunnel.conf` files to replace GENERATED_TOKEN
 literal with the created token.
 
 ## Restart docker compose environment

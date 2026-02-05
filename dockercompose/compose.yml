@@ -9,6 +9,7 @@ services:
       - ./data/broker/log:/app/log
       - ./config/broker/rsa_key:/app/rsa_key
       - ./config/broker/settings.py:/app/server/settings.py
+    restart: unless-stopped
   task-manager:
     image: lhzubieta/uds-broker:4.0
     command: "python manage.py taskManager --start --foreground"
@@ -17,6 +18,7 @@ services:
     volumes:
       - ./config/broker/rsa_key:/app/rsa_key
       - ./config/broker/settings.py:/app/server/settings.py
+    restart: unless-stopped
   broker-db:
     image: mariadb:${MARIADB_VERSION}
     environment:
@@ -26,10 +28,13 @@ services:
       MARIADB_PASSWORD: udspassword
     volumes:
       - ./data/broker/db:/var/lib/mysql
+    restart: unless-stopped
   memcache:
     image: "memcached:1.6"
+    restart: unless-stopped
   guacd:
     image: "guacamole/guacd:1.6.0"
+    restart: unless-stopped
   guacamole:
     image: "guacamole/guacamole:1.6.0"
     volumes:
@@ -39,6 +44,7 @@ services:
       GUACAMOLE_HOME: /guacamole_home
     depends_on:
       - guacd
+    restart: unless-stopped
   webserver:
     image: caddy:2.11
     environment:
@@ -57,6 +63,7 @@ services:
       - "443:443"
     depends_on:
       - broker
+    restart: unless-stopped
   tunnel-server:
     image: lhzubieta/uds-tunnel-server:4.0
     ports:
@@ -64,3 +71,4 @@ services:
     volumes:
       - ./config/tunnel-server/udstunnel.conf:/etc/udstunnel.conf
       - ./config/tunnel-server/certs:/etc/certs
+    restart: unless-stopped

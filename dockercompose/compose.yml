@@ -1,87 +1,88 @@
 services:
-  udsbroker:
+  broker:
     build:
-      context: ./building/udsbroker
+      context: ./building/broker
       dockerfile: DockerFile
       args:
         OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
-    image: udsbroker:4.0-${OPENUDS_COMMIT}
+    image: uds-broker:4.0-${OPENUDS_COMMIT}
     depends_on:
-      - mysql
+      - broker-db
       - memcache
     volumes:
-      - assets:/app/static
-      - ./server/rsa_key:/app/rsa_key
-  taskManager:
+      - ./data/broker/assets:/app/static
+      - ./data/broker/log:/app/log
+      - ./config/broker/rsa_key:/app/rsa_key
+      - ./config/broker/settings.py:/app/server/settings.py
+  task-manager:
     build:
-      context: ./building/udsbroker
+      context: ./building/broker
       dockerfile: DockerFile
       args:
         OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
-    image: udsbroker:4.0-${OPENUDS_COMMIT}
+    image: uds-broker:4.0-${OPENUDS_COMMIT}
     command: "python manage.py taskManager --start --foreground"
     depends_on:
-      - mysql
+      - broker-db
     volumes:
-      - ./server/rsa_key:/app/rsa_key
-  mysql:
-    image: mysql:${MYSQL_VERSION}
+      - ./config/broker/rsa_key:/app/rsa_key
+      - ./config/broker/settings.py:/app/server/settings.py
+  broker-db:
+    image: mariadb:${MARIADB_VERSION}
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      MYSQL_DATABASE: uds
-      MYSQL_USER: udsuser
-      MYSQL_PASSWORD: udspassword
+      MARIADB_RANDOM_ROOT_PASSWORD: 'yes'
+      MARIADB_DATABASE: uds
+      MARIADB_USER: udsuser
+      MARIADB_PASSWORD: udspassword
     volumes:
-      - dbdata:/var/lib/mysql
-    security_opt:
-      - seccomp:unconfined
-  mysql-guacamole:
-    image: mysql:${MYSQL_VERSION}
+      - ./data/broker/db:/var/lib/mysql
+  guacamole-db:
+    image: mariadb:${MARIADB_VERSION}
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      MYSQL_DATABASE: guacamole
-      MYSQL_USER: guacamoleuser
-      MYSQL_PASSWORD: guacamolepassword
-    security_opt:
-      - seccomp:unconfined
+      MARIADB_RANDOM_ROOT_PASSWORD: 'yes'
+      MARIADB_DATABASE: guacamole
+      MARIADB_USER: guacamoleuser
+      MARIADB_PASSWORD: guacamolepassword
+    volumes:
+      - ./data/guacamole/db:/var/lib/mysql
   memcache:
-    image: "memcached:1.6.12-alpine"
+    image: "memcached:1.6"
   guacd:
-    image: "guacamole/guacd:1.5.0"
-    ports:
-      - "4822:4822"
+    image: "guacamole/guacd:1.6.0"
   guacamole:
-    image: "guacamole/guacamole:1.5.0"
+    image: "guacamole/guacamole:1.6.0"
     volumes:
-      - ./guacamoletunnel:/guacamole_home
+      - ./config/guacamole:/guacamole_home
     environment:
       GUACD_HOSTNAME: guacd
       GUACAMOLE_HOME: /guacamole_home
-      MYSQL_HOSTNAME: mysql-guacamole
+      MYSQL_HOSTNAME: guacamole-db
       MYSQL_DATABASE: guacamole
       MYSQL_USER: guacamoleuser
       MYSQL_PASSWORD: guacamolepassword 
     links:
       - guacd
-    
   webserver:
-    image: caddy:2.5.1
+    image: caddy:2.11
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - assets:/media
-      - ./caddy/data:/data
-      - ./caddy/config:/config
-      - ./clients:/media/clients
+      # Caddy's own documentation suggests mounting a whole directory, not just
+      # the Caddyfile so that the whole Caddyfile can be replaced and config
+      # reload without the need to recreate the container.
+      - ./config/caddy/config:/etc/caddy
+      - ./data/broker/assets:/media
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+      - ./data/broker/clients:/media/clients
     ports:
       - "80:80"
       - "443:443"
     depends_on:
-      - udsbroker
-  uds-tunnel-server:
+      - broker
+  tunnel-server:
     build:
-      context: ./building/udstunnelserver
+      context: ./building/tunnelserver
       dockerfile: DockerFile
       args:
         OPENUDS_COMMIT: ${OPENUDS_COMMIT:?OPENUDS_COMMIT is required}
@@ -89,11 +90,5 @@ services:
     ports:
       - "7777:7777"
     volumes:
-      - ./uds-tunnel/udstunnel.conf:/etc/udstunnel.conf
-      - ./uds-tunnel/certs:/etc/certs
-volumes:
-  dbdata:
-  assets:
-  caddyconfig:
-  caddydata:
-  clients:
+      - ./config/tunnel-server/udstunnel.conf:/etc/udstunnel.conf
+      - ./config/tunnel-server/certs:/etc/certs

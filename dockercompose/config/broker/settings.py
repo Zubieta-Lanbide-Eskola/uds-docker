@@ -33,7 +33,7 @@ DATABASES = {
         "NAME": "uds",  # Or path to database file if using sqlite3.
         "USER": "udsuser",  # Not used with sqlite3.
         "PASSWORD": "udspassword",  # Not used with sqlite3.
-        "HOST": "mysql",  # Set to empty string for localhost. Not used with sqlite3.
+        "HOST": "broker-db",  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
         # 'CONN_MAX_AGE': 600,		     # Enable DB Pooling, 10 minutes max connection duration
     }

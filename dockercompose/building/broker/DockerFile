@@ -58,8 +58,6 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 ENV TZ=Europe/Madrid
 COPY --from=builder --chown=appuser:appuser /app /app
-COPY ./settings.py /app/server/settings.py
-
 
 WORKDIR /app/
 #RUN pip3 install --no-cache-dir -r requirements.txt

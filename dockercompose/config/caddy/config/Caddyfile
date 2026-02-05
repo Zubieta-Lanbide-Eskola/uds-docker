@@ -6,7 +6,7 @@
     }
     root * /media
     handle {
-        reverse_proxy @notStatic udsbroker:8000 
+        reverse_proxy @notStatic broker:8000 
     }
     handle /uds/res/* {
         uri strip_prefix /uds/res

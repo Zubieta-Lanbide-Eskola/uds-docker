@@ -36,15 +36,6 @@ services:
       MARIADB_PASSWORD: udspassword
     volumes:
       - ./data/broker/db:/var/lib/mysql
-  guacamole-db:
-    image: mariadb:${MARIADB_VERSION}
-    environment:
-      MARIADB_RANDOM_ROOT_PASSWORD: 'yes'
-      MARIADB_DATABASE: guacamole
-      MARIADB_USER: guacamoleuser
-      MARIADB_PASSWORD: guacamolepassword
-    volumes:
-      - ./data/guacamole/db:/var/lib/mysql
   memcache:
     image: "memcached:1.6"
   guacd:
@@ -56,11 +47,7 @@ services:
     environment:
       GUACD_HOSTNAME: guacd
       GUACAMOLE_HOME: /guacamole_home
-      MYSQL_HOSTNAME: guacamole-db
-      MYSQL_DATABASE: guacamole
-      MYSQL_USER: guacamoleuser
-      MYSQL_PASSWORD: guacamolepassword 
-    links:
+    depends_on:
       - guacd
   webserver:
     image: caddy:2.11

@@ -6,8 +6,33 @@ Create a RSA key an save as [server/rsa_key](./server/rsa_key) file. This key wi
 If you loose this file you must recreate all the secrets. For example:
 
 ```
-openssl genrsa --out server/rsa_key 2048
+openssl genrsa --out ./config/broker/rsa_key 2048
 ```
+
+# Create tunnel certs
+
+In `config/tunnel-server/certs` you must put a certificate file and it's key for the
+RDP tunnel server.
+
+You can generate a self-signed certificate and, while defining tunneled RDP UDP
+transport in OpenUDS instruct it not to verify the SSL certificate.
+
+Here is an example of generating a self signed certificate:
+
+```bash
+openssl genrsa -out config/tunnel-server/certs/server.key 2048
+
+openssl req -key config/tunnel-server/certs/server.key -new -out config/tunnel-server/certs/server.csr
+# Fill with whatever you prefer but in Common Name just in case set the public
+# domain used to access the tunnel (in this deployment this is the same one
+# used to access the broker).
+
+openssl x509 -signkey config/tunnel-server/certs/server.key -in config/tunnel-server/certs/server.csr -req -days 36500 -out config/tunnel-server/certs/server.crt
+```
+
+**Warning!** This is not a best practice at all. For sensible environments you
+should seriously consider using valid and recognized certificates and configuring
+your transports so that they validate the SSL certificate.
 
 # Web access
 
@@ -23,7 +48,7 @@ advantages for development purposes:
  1. Modern OSs will point to 127.0.0.1 with anything ending in ".localhost"
  1. `Caddy` will use it's internal CA to generate a certificate
 
-# Set tunnel token
+# Prepare and set tunnel token
 
 In order to comunicate with uds broker the guacamole and uds tunnel server must have a valid token.
 This token can be any hash under 48 characters.  Generate this chain with any tool you want.
@@ -45,30 +70,31 @@ docker compose up -d
 
 ## Create / update database tables and deploy static webfiles
 
-Open a shell in the udsbroker service (docker exec -it dockercompose_udsbroker_1 bash) and run
+Open a shell in the broker service (`docker compose exec -it broker bash`) and
+run:
 
-```
+```bash
 python manage.py migrate
 python manage.py collectstatic
 ```
 
 ## Register the tunnel token in the db
 
-Open a shell in the udsbroker service and run
+Open a shell in the broker service with `python manage.py shell` and run
+there:
 
-```
-python manage.py shell
-
->>> import datetime
->>> from uds.models.tunnel_token import TunnelToken
->>> token=YOUR_GENERATED_TOKEN
->>> tunnel=YOUR_DOCKER_COMPOSE_SERVER_IP
->>> TunnelToken.objects.create(ip=tunnel, token=token,stamp=datetime.datetime.now())
+```python
+import datetime
+from uds.models.servers import Server
+token=YOUR_GENERATED_TOKEN
+tunnel=YOUR_DOCKER_COMPOSE_SERVER_IP
+Server.objects.create(ip=tunnel, token=token,stamp=datetime.datetime.now())
+quit()
 ```
 
 ## Configure token in guacamole and uds tunnel server
 
-Edit guacamoletunnel/guacamole.properties and uds-tunnel/udstunnel.conf files to replace GENERATED_TOKEN
+Edit `config/guacamole/guacamole.properties` and `config/tunnel-server/udstunnel.conf` files to replace GENERATED_TOKEN
 literal with the created token.
 
 ## Restart docker compose environment
@@ -77,13 +103,15 @@ literal with the created token.
 docker compose restart
 ```
 
-## Default admin
+# Accesing for the first time
 
 Use a browser to connect to server's IP/URL as configured in Caddy.
 
 Default admin is 'root' and password 'udsmam0'.
 
-Create a new authenticator (for example of type Internal Database) and a new admin user.
+Create a new authenticator (for example of type Internal Database) and a new
+admin user. Create also a group and ensure the newly cretead user is part of it
+(it seems that OpenUDS refuses to allow acces to users in no group).
 
 Login with new admin user, and disable default admin in Tools->Configuration->Security "allowRootWebAccess".
 
@@ -93,4 +121,4 @@ Check that default admin is no longer able to login!
 
 UDS uses dedicated clients to provide RDP connections. The easiest way to get those clients is openning an account in [UDSenterprise.com](https://www.udsenterprise.com/en/accounts/register) and download from there.
 
-Once dowloaded save in [dockecompose/clients](clients) folder.
+Once dowloaded save in `dockecompose/data/broker/clients` folder.

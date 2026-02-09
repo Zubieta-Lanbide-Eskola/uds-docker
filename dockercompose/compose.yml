@@ -1,86 +1,74 @@
-version: "3.9"
 services:
-  udsbroker:
-    ports: 
-      - "8000:8000"
-    image: "aitzol/udsbroker:3.5"
+  broker:
+    image: lhzubieta/uds-broker:4.0
     depends_on:
-      - mysql
+      - broker-db
       - memcache
     volumes:
-      - assets:/app/static
-      - ./server/rsa_key:/app/rsa_key
-  taskManager:
-    image: "aitzol/udsbroker:3.5"
+      - ./data/broker/assets:/app/static
+      - ./data/broker/log:/app/log
+      - ./config/broker/rsa_key:/app/rsa_key
+      - ./config/broker/settings.py:/app/server/settings.py
+    restart: unless-stopped
+  task-manager:
+    image: lhzubieta/uds-broker:4.0
     command: "python manage.py taskManager --start --foreground"
     depends_on:
-      - mysql
-  mysql:
-    image: mysql
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      MYSQL_DATABASE: uds
-      MYSQL_USER: udsuser
-      MYSQL_PASSWORD: udspassword
+      - broker-db
     volumes:
-      - dbdata:/var/lib/mysql
-    security_opt:
-      - seccomp:unconfined
-  mysql-guacamole:
-    image: mysql
+      - ./config/broker/rsa_key:/app/rsa_key
+      - ./config/broker/settings.py:/app/server/settings.py
+    restart: unless-stopped
+  broker-db:
+    image: mariadb:${MARIADB_VERSION}
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      MYSQL_DATABASE: guacamole
-      MYSQL_USER: guacamoleuser
-      MYSQL_PASSWORD: guacamolepassword
-    security_opt:
-      - seccomp:unconfined
+      MARIADB_RANDOM_ROOT_PASSWORD: 'yes'
+      MARIADB_DATABASE: uds
+      MARIADB_USER: udsuser
+      MARIADB_PASSWORD: udspassword
+    volumes:
+      - ./data/broker/db:/var/lib/mysql
+    restart: unless-stopped
   memcache:
-    image: "memcached"
+    image: "memcached:1.6"
+    restart: unless-stopped
   guacd:
-    image: "guacamole/guacd"
-    ports:
-      - "4822:4822"
+    image: "guacamole/guacd:1.6.0"
+    restart: unless-stopped
   guacamole:
-    image: "guacamole/guacamole"
+    image: "guacamole/guacamole:1.6.0"
     volumes:
-      - ./guacamoletunnel:/guacamole_home
+      - ./config/guacamole:/guacamole_home
     environment:
       GUACD_HOSTNAME: guacd
       GUACAMOLE_HOME: /guacamole_home
-      MYSQL_HOSTNAME: mysql-guacamole
-      MYSQL_DATABASE: guacamole
-      MYSQL_USER: guacamoleuser
-      MYSQL_PASSWORD: guacamolepassword 
-    links:
+    depends_on:
       - guacd
-    ports:
-      - "8080:8080"
-    
+    restart: unless-stopped
   webserver:
-    image: caddy
+    image: caddy:2.11
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - assets:/media
-      - ./caddy/data:/data
-      - ./caddy/config:/config
-      - ./clients:/media/clients
+      # Caddy's own documentation suggests mounting a whole directory, not just
+      # the Caddyfile so that the whole Caddyfile can be replaced and config
+      # reload without the need to recreate the container.
+      - ./config/caddy/config:/etc/caddy
+      - ./data/broker/assets:/media
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+      - ./data/broker/clients:/media/clients
     ports:
       - "80:80"
       - "443:443"
     depends_on:
-      - udsbroker
-  uds-tunnel-server:
-    image: aitzol/uds-tunnel-server:3.5
-    ports: 
+      - broker
+    restart: unless-stopped
+  tunnel-server:
+    image: lhzubieta/uds-tunnel-server:4.0
+    ports:
       - "7777:7777"
     volumes:
-      - ./uds-tunnel/udstunnel.conf:/etc/udstunnel.conf
-volumes:
-  dbdata:
-  assets:
-  caddyconfig:
-  caddydata:
-  clients:
+      - ./config/tunnel-server/udstunnel.conf:/etc/udstunnel.conf
+      - ./config/tunnel-server/certs:/etc/certs
+    restart: unless-stopped

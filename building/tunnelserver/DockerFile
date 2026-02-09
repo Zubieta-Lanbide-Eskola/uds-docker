@@ -1,0 +1,61 @@
+FROM python:3.11-slim AS builder
+
+# Set environment variables to optimize Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1 
+
+
+RUN apt update&&apt install -y \
+    build-essential   \
+    tzdata \
+    pkg-config \
+    git
+
+
+ENV TZ=Europe/Madrid
+
+ARG OPENUDS_COMMIT
+RUN git clone https://github.com/VirtualCable/openuds.git /tmp/openuds-${OPENUDS_COMMIT} && \
+    cd /tmp/openuds-${OPENUDS_COMMIT} && \
+    git checkout ${OPENUDS_COMMIT} && \
+    git config submodule.tunnel-server.url https://github.com/VirtualCable/uds-tunnel-server.git && \
+    git submodule update --init tunnel-server && \
+    cd / && \
+    mv /tmp/openuds-${OPENUDS_COMMIT}/tunnel-server/src /app && \
+    cp /tmp/openuds-${OPENUDS_COMMIT}/tunnel-server/requirements.txt /app/ && \
+    rm -rf /tmp/openuds*
+WORKDIR /app/
+
+RUN pip3 install --no-cache-dir -r requirements.txt
+# Stage 2: Production stage
+FROM python:3.11-slim
+
+RUN apt update&&apt install -y \
+    tzdata  \
+    pkg-config  
+
+RUN useradd --system --user-group openuds
+
+# Copy the Python dependencies from the builder stage
+COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+
+ENV TZ=Europe/Madrid
+COPY --from=builder /app /app
+
+
+WORKDIR /app/
+#RUN pip3 install --no-cache-dir -r requirements.txt
+#RUN pip3 install --no-cache-dir gunicorn
+COPY --chmod=755 <<EOT ./entrypoint.sh
+#!/usr/bin/env bash
+set -e
+
+chown openuds:openuds /etc/certs/server.key
+chown openuds:openuds /etc/certs/server.crt
+chmod 600 /etc/certs/server.key
+chmod 644 /etc/certs/server.crt
+
+python udstunnel.py -t -c /etc/udstunnel.conf
+EOT
+CMD ["./entrypoint.sh"]

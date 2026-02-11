@@ -12,3 +12,5 @@ images. You won't need them unless you plan to build the images by yourself inst
 `dockercompose` directory contains the files you should download to deploy
 *OpenUDS*. This docker compose environment needs some setup steps, so please
 read the [README](./dockercompose/README.md) file on dockercompose folder.
+
+"openuds4.0" branch represents our currently best outcome for a docker compose deployment based in OpenUDS 4.0. "main" branch might contain WIP that might target a different OpenUDS version or might have non working changes.

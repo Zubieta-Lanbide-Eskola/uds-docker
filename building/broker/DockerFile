@@ -46,6 +46,7 @@ RUN apt update&&apt install -y \
     libpangoft2-1.0-0 \
     libmemcached-dev \
     libmariadb3 \
+    libldap2 \
     tzdata  \
     pkg-config  
 
